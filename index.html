@@ -1,0 +1,831 @@
+<!DOCTYPE HTML>
+<!--
+Programmation d'animation pour le Web 2
+Oudayan Dutta
+Groupe 15612
+TP2 - Jeu Trumperies
+-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Oudayan Dutta">
+        <title>Trumperies</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: lightgray;
+                text-align: center;
+            }
+            #start-scene {
+                position: absolute;
+                display: block;
+                width: 1200px;
+                height: 800px;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                margin: auto;
+                background-color: green;
+                text-align: center;
+                color: yellow;
+                opacity: 1;
+                z-index: 1;
+            }
+            #start-panel {
+                position:relative;
+                top: 230px;
+                height: 200px;
+                text-align: center;
+                color: yellow;	
+            }
+            #myCanvas {
+                position: absolute;
+                display: block;
+                width: 1200px;
+                height: 800px;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                margin: auto;
+                margin-right: auto;	  
+                border: 4px solid #000000;	   
+            }
+            #gameOver-scene {
+                position: absolute;
+                display: none;
+                width: 1200px;
+                height: 800px;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                margin:auto;
+                margin:auto;	 
+                background-color: red;
+                opacity: 1;
+                z-index: 1;
+            }
+            #gameOver-panel {
+                position:relative;
+                top:150px;
+                height: 100px;
+                text-align: center;
+                color: yellow;
+            }
+            #sources {
+                top:900px;
+                position: relative;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: left;
+            }
+            #myButton {
+                font: bold 2em Arial, serif;
+                padding: 0.5em;
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Trumperies</h1>
+        <div id="start-scene"> 
+            <div id="start-panel">
+                <h2>Trumperies</h2>
+                <h3>Défendez les É.-U.</h3>	
+                <h4>Flèches pour se déplacer</h4>
+                <h4>Shift pour courrir</h4>	
+                <h4>Alt pour reculer</h4>	
+                <h4>Touches z, x et c pour tirer</h4>	
+                <h4>Attention ! Il faut le bon projectile pour contrer l'ennemi !</h4>
+                <button id="playGame" onClick="playGame()">Play</button>
+            </div>
+        </div>
+        <div id="gameOver-scene"> 
+            <div id="gameOver-panel">
+                <h1>GAME OVER</h1>
+                <h4>Les ennemis de Trump ont gagné !!!</h4>
+                <button id="playAgain" onClick="playAgain()">Play Again</button>
+            </div>
+        </div>
+        <div id="sources">
+            <table>
+                <tr><th>Image sources:</th><th></th></tr>
+                <tr><td>Spritesheet Trump (idle, walk, run)</td><td><a href="http://www.3dcartoonmodels.com/2017/02/little-trump-sprites-sheet-free-asset.html" target="_blank">www.3dcartoonmodels.com</a></td></tr>
+                <tr><td>US Map Background</td><td><a href="https://www.worldmapsonline.com/images/giclee/satellite_image_maps/us_physical_giclee_lg.jpg" target="_blank">www.worldmapsonline.com</a></td></tr>
+                <tr><td>Kim Jung Un</td><td><a href="https://img.etimg.com/thumb/msid-55518159,width-643,imglength-204331,resizemode-4/why-kim-jong-un-is-making-headlines.jpg" target="_blank">www.economictimes.indiatimes.com</a></td></tr>
+                <tr><td>Mexican Mariachi</td><td><a href="https://images.vexels.com/media/users/3/143353/isolated/preview/cb2ecd5ec87f40d7727ad64fee76ac75-mariachi-playing-trumpet-cartoon-by-vexels.png" target="_blank">www.vexels.com</a></td></tr>
+                <tr><td>CNN</td><td><a href="https://www.wysetc.org/wp-content/uploads/2014/11/CNN-644x334.png" target="_blank">www.wysetc.org</a></td></tr>
+                <tr><td>Sound Wave</td><td><a href="https://openclipart.org/image/2400px/svg_to_png/30865/audio%20icon.png" target="_blank">www.openclipart.org</a></td></tr>
+            </table>
+            <table>
+                <tr><th>Audio sources:</th><th></th></tr>
+                <tr><td>Fire And Fury</td><td><a href="https://www.youtube.com/watch?v=whouGnEGrJk" target="_blank">www.youtube.com</a></td></tr>
+                <tr><td>Build a wall</td><td><a href="https://www.youtube.com/watch?v=ypNIs-H_NQc" target="_blank">www.youtube.com</a></td></tr>
+                <tr><td>Fake News</td><td><a href="https://www.youtube.com/watch?v=wJxxQM7GxJA" target="_blank">www.youtube.com</a></td></tr>
+                <tr><td>Male Grunt</td><td><a href="http://soundbible.com/462-Male-Grunt.html" target="_blank">www.soundbible.com</a></td></tr>
+            </table>
+            <p>La spritesheet et son de l'explosion ont été pris des exemples du cours de Programmation d'animation pour le Web</p>
+        </div>
+        <canvas id="myCanvas" width="1200" height="800"></canvas>
+        <script src="js/SheetRowsCols.js"></script>
+        <script src="js/SheetRows.js"></script>
+        <script src="js/Enemy.js"></script>
+        <script src="js/Vector2D.js"></script>
+        <script src="js/Projectile.js"></script>
+        <script>
+        
+    //===========================VARIABLES===========================
+        var canvas=document.getElementById("myCanvas");
+        var context=canvas.getContext("2d");
+ 
+        var isGameOver = false;
+        var lives = 3;
+        var score = 0;
+        var level = 1;
+
+        // Background
+        var imageBg = new Image();	
+        imageBg.src = "images/United_States_Map.jpg";
+        
+        // Array du personnage Trump
+        var Trumps = [];
+        // Spritesheet contenant les images du personnage 
+        var sheetTrump = new Image();	
+        sheetTrump.src = "images/trump_idle.png";
+        // Instanciation de la classe
+        // SheetRowsCols(x, y, speed, direction, rad, sheet, ticsPerImage, reverse, nbImages, imageWidth, imageHeight, xStart, yStart, scaleX, scaleY, canvas, context)
+        var Trump = new SheetRowsCols(canvas.width/2, canvas.height/2, 100, "down", Math.PI * 0.5, sheetTrump, 3, 0, 10, 256, 256, 0, 0, 0.75, 0.75, canvas, context);
+        // Vecteur position Trump
+        // Vector2D(x, y)
+        var vectorPosTrump = new Vector2D(Trump.x,Trump.y);
+        Trumps.push(Trump);
+
+        // Array des ennemis
+        var Enemies = [];
+        // Côté de départ
+        var startDir = "top";
+        // Image ennemi 1 
+        var imageEnemy1 = new Image();	
+        imageEnemy1.src = "images/Kim-Jong-Un.png";
+        // Image ennemi 2 
+        var imageEnemy2 = new Image();	
+        imageEnemy2.src = "images/Mexican.png";
+        // Image ennemi 1 
+        var imageEnemy3 = new Image();	
+        imageEnemy3.src = "images/CNN.png";
+        // Position de départ
+        var randStart = random(0, 4);
+        if (randStart <= 1) {
+            // Top
+            startDir = "top";
+            enemyX = random(0, canvas.width);
+            enemyY = random(-100, 0);
+        }
+        else if (randStart > 1 && randStart <= 2) {
+            // Bottom
+            startDir = "bottom";
+            enemyX = random(0, canvas.width);
+            enemyY = random(canvas.height, canvas.height + 100);
+        }
+        else if (randStart >2 && randStart <= 3) {
+            // Left
+            startDir = "left";
+            enemyX = random(-100, 0);
+            enemyY = random(0, canvas.height);
+        }
+        else {
+            // Right
+            startDir = "right";
+            enemyX = random(canvas.width, canvas.width + 100);
+            enemyY = random(0, canvas.height);
+        }
+        // Instanciation de la classe
+        // function Enemy(x, y, start, speed, id, image, scaleX, scaleY, context)
+        var randEnemy = random(0, 3);
+        if (randEnemy <= 1) {
+            var Enemy1 = new Enemy(enemyX, enemyY, startDir, 150, 1, imageEnemy1, 0.33, 0.33, context);
+            Enemies.push(Enemy1);
+        }
+        else if (randEnemy > 2) {
+            var Enemy3 = new Enemy(enemyX, enemyY, startDir, 150, 3, imageEnemy3, 0.5, 0.5, context);
+            Enemies.push(Enemy3);
+        }
+        else {
+            var Enemy2 = new Enemy(enemyX, enemyY, startDir, 150, 2, imageEnemy2, 0.75, 0.75, context);
+            Enemies.push(Enemy2);
+        }
+        // Vecteur pos. enemy
+        var vectorEnemyPos = new Vector2D(enemyX, enemyY);
+        // Calcul du vecteur vectorenemiespeed (=direction) ou doit se diriger l'ennemi
+        var vectorEnemySpeed = new Vector2D();
+        vectorEnemySpeed = vectorPosTrump.subtract(vectorEnemyPos);
+        // Module ou longueur du vecteur (=nombre)
+        var modEnemySpeed = vectorEnemySpeed.length();
+            
+        // Array de Projectiles
+        var SoundWaves=[];
+        var imageSoundWave = new Image();	
+        imageSoundWave.src = "images/SoundWave.png";
+        var lastFire = Date.now();
+
+        // Array d'Explosions
+        var sheetExplosions = new Image();	
+        sheetExplosions.src = "images/sheet_explosion.png";
+        var Explosions=[];
+        var lastExplosion = Date.now();
+
+        // Variable de départ pour l'animation
+        var t1 = Date.now();
+        //touches appuyees dans objet JS
+        var keysDown = {};
+        var score = 0;
+        var isGameOver = false;
+
+
+    //===========================FUNCTIONS===========================
+
+        // Fonction pour générer un chiffre aléatoire
+        function random(min, max) {
+            var num = Math.random() * (max - min) + min;
+            return num;
+        }
+
+        // Enregistrer touches appuyees
+        addEventListener("keydown",enregistrer);
+        
+        function enregistrer(event)  {   
+            //console.log(event.keyCode);//aff. keycode touche app.(ex:38 si fleche haut)
+            keysDown[event.keyCode] = true;
+            //console.log(keysDown);//affiche Object {38: true} si flech. haut appuyee
+        }
+
+        // Effacer de l'objet JS les touches relachees
+        addEventListener("keyup",effacer);
+        function effacer(event) {
+            delete keysDown[event.keyCode];//efface keyCode touche relachee
+            //console.log(keysDown);//aff. Object {} si touche relachee (vide l'objet)
+        }
+
+        // Animation
+        function animate() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            display();
+            var t2 = Date.now();//fin affichage 
+            var t = (t2 - t1)/1000;//durée affichage en ms (variable)
+            increment(t);//incrémenter images du sprite et positions
+            t1 = Date.now();//nouveau cycle
+            animation = requestAnimationFrame(animate);
+        };
+        //requestAnimationFrame(animate);
+
+        function display() {
+            // Afficher le background
+            context.drawImage(imageBg, 0, 0);
+            // Afficher Trumps
+            for (var i=0; i<Trumps.length; i++) {
+                //Trumps=[Trump, vectorPosTrump];
+                Trumps[i].display();
+            }
+            // Afficher SoundWaves
+            for (var i=0; i<SoundWaves.length; i++) {
+                SoundWaves[i].display();
+
+            }
+            // Afficher Ennemies
+            for (var i=0; i<Enemies.length; i++) {
+                Enemies[i].display();
+            }
+            //afficher explosions		
+            for (var i=0; i< Explosions.length; i++) {
+                Explosions[i].display();
+                //retirer explosion si t>300ms
+                if (Date.now() - lastExplosion > 500) {
+                    Explosions.splice(i, 1);
+                }
+            }
+            // Mettre à jour le nombre de vies restantes
+            updateLives()
+            // Mettre à jour le score
+            updateScore();
+            // Mettre à jour le niveau
+            updateLevel();
+        };
+
+        // Fonction pour générer aléatoirement un ennemi
+        function randomEnemy() {
+             // Position de départ
+            randStart = random(0, 4);
+            if (randStart <= 1) {
+                // Top
+                startDir = "top";
+                enemyX = random(0, canvas.width);
+                enemyY = random(-100, 0);
+            }
+            else if (randStart > 1 && randStart <= 2) {
+                // Bottom
+                startDir = "bottom";
+                enemyX = random(0, canvas.width);
+                enemyY = random(canvas.height, canvas.height + 100);
+            }
+            else if (randStart >2 && randStart <= 3) {
+                // Left
+                startDir = "left";
+                enemyX = random(-100, 0);
+                enemyY = random(0, canvas.height);
+            }
+            else {
+                // Right
+                startDir = "right";
+                enemyX = random(canvas.width, canvas.width + 100);
+                enemyY = random(0, canvas.height);
+            }
+            vectorPosTrump = new Vector2D(Trump.x,Trump.y);
+            // Vecteur pos. enemy
+            vectorEnemyPos = new Vector2D(enemyX, enemyY);
+            // Calcul du vecteur vectorenemiespeed (=direction) ou doit se diriger l'ennemi
+            vectorEnemySpeed = new Vector2D();
+            vectorEnemySpeed = vectorPosTrump.subtract(vectorEnemyPos);
+            // Module ou longueur du vecteur (=nombre)
+            modEnemySpeed = vectorEnemySpeed.length();
+            enemySpeed = 150 + level * 10;
+            // Instanciation de la classe
+            // function Enemy(x, y, start, speed, id, image, scaleX, scaleY, context)
+            randEnemy = random(0, 3);
+            if (randEnemy <= 1) {
+                var Enemy1 = new Enemy(enemyX, enemyY, startDir, enemySpeed, 1, imageEnemy1, 0.33, 0.33, context);
+                Enemies.push(Enemy1);
+            }
+            else if (randEnemy > 2) {
+                var Enemy3 = new Enemy(enemyX, enemyY, startDir, enemySpeed, 3, imageEnemy3, 0.5, 0.5, context);
+                Enemies.push(Enemy3);
+            }
+            else {
+                var Enemy2 = new Enemy(enemyX, enemyY, startDir, enemySpeed, 2, imageEnemy2, 0.75, 0.75, context);
+                Enemies.push(Enemy2);
+            }
+        }
+
+        function increment(t) {
+
+        // MOUVEMENTS TRUMP
+            // Fleche Up (va vers le fond)
+            if (38 in keysDown) {
+                // Shift pour courrir
+                if (16 in keysDown) {
+                    sheetTrump.src = "images/trump_run.png";
+                    Trump.nbImages = 6;
+                    Trump.speed = 300;
+                }
+                else {
+                    sheetTrump.src = "images/trump_walk.png";
+                    Trump.nbImages = 10;
+                    Trump.speed = 100;
+                }
+                Trump.xStart = 0;
+                Trump.yStart = 2 * 256;
+                Trump.reverse = false;
+                Trump.direction = "up";
+                Trump.rad = Math.PI * 1.5;
+               // Alt pour reculer
+                if (18 in keysDown) {
+                    Trump.down(t);
+                }
+                else {
+                    Trump.up(t);
+                }
+            }
+            // Fleche Down (va vers l'avant)
+            if (40 in keysDown) {
+                // Shift pour courrir
+                if (16 in keysDown) {
+                    sheetTrump.src = "images/trump_run.png";
+                    Trump.nbImages = 6;
+                    Trump.speed = 300;
+                }
+                else {
+                    sheetTrump.src = "images/trump_walk.png";
+                    Trump.nbImages = 10;
+                    Trump.speed=100;
+                }
+                Trump.xStart = 0;
+                Trump.yStart = 0;
+                Trump.reverse = false;
+                Trump.direction = "down";
+                Trump.rad = Math.PI * 0.5;
+                // Alt pour reculer
+                if (18 in keysDown) {
+                    Trump.up(t);
+                }
+                else {
+                    Trump.down(t);
+                }
+            }
+            // Fleche Left (va vers la gauche)
+            if (37 in keysDown) {
+                // Shift pour courrir
+                if (16 in keysDown) {
+                    sheetTrump.src = "images/trump_run.png";
+                    Trump.nbImages = 6;
+                    Trump.speed = 300;
+                }
+                else {
+                    sheetTrump.src = "images/trump_walk.png";
+                    Trump.nbImages = 10;
+                    Trump.speed = 100;
+                }
+                Trump.xStart = 0;
+                Trump.yStart = 3 * 256;
+                Trump.direction = "left";
+                Trump.rad = Math.PI;
+                // Alt pour reculer
+                if (18 in keysDown) {
+                    Trump.reverse = true;
+                    Trump.right(t);
+                }
+                else {
+                    Trump.reverse = false;
+                    Trump.left(t);
+                }
+            }
+            // Fleche droite (va vers la droite)
+            if (39 in keysDown) {
+                // Shift pour courrir
+                if (16 in keysDown) {
+                    sheetTrump.src = "images/trump_run.png";
+                    Trump.nbImages = 6;
+                    Trump.speed = 300;
+                }
+                else {
+                    sheetTrump.src = "images/trump_walk.png";
+                    Trump.nbImages = 10;
+                    Trump.speed = 100;
+                }
+                Trump.xStart = 0;
+                Trump.yStart = 256;
+                Trump.direction = "right";
+                Trump.rad = 0;
+                // Alt pour reculer
+                if (18 in keysDown) {
+                    Trump.reverse = true;;
+                    Trump.left(t);
+                }
+                else {
+                    Trump.reverse = false;
+                    Trump.right(t);
+                }
+            }
+
+            // Si aucune touche n'est appuyee. donne 0 si objet vide
+            if (Object.keys(keysDown).length==0) {
+                sheetTrump.src = "images/trump_idle.png";
+                Trump.nbImages = 10;
+                Trump.speed = 100;
+            }
+            //console.log("objet:"+Object.keys(keysDown).length);
+
+        // PROJECTILES SOUNDWAVES
+            // Tir SoundWaves avec la touche z, x ou c
+            if ((90 in keysDown || 88 in keysDown || 67 in keysDown) && Date.now() - lastFire > 1200) { 
+                // Instancier à chaque appui
+                // Projectile(x, y, speed, direction, rad, id, image, scaleX, scaleY, context)
+                var SoundWave = new Projectile(Trump.x, Trump.y - 25, 500, Trump.direction, Trump.rad, 1, imageSoundWave, .5, .5, context);	
+                SoundWaves.push(SoundWave);
+                // Son "Fake News" avec la touche z
+                if (90 in keysDown) {
+                    SoundWave.id = 1;
+                    var KimJongUnSound= new Audio("audio/Fire_And_Fury.mp3");
+                    KimJongUnSound.play();
+                }
+                // Son "Fire and Fury" avec la touche x
+                if (88 in keysDown) {
+                    SoundWave.id = 2;
+                    var MexicanSound= new Audio("audio/Build_That_Wall.mp3");
+                    MexicanSound.play();
+                }
+                // Son "Build That Wall" avec la touche c
+                if (67 in keysDown) {
+                    SoundWave.id = 3;
+                    var CNNSound= new Audio("audio/Fake_News.mp3");
+                    CNNSound.play();
+                }
+                // Dernier tir
+                console.log(SoundWaves.id);
+                lastFire = Date.now();
+            }
+            //incrementer position SoundWaves
+            for (var i=0; i<SoundWaves.length; i++) {
+                // Direction Up
+                if (SoundWaves[i].direction == "up"){
+                    SoundWaves[i].y -= SoundWaves[i].speed * t;
+                    if (SoundWaves[i].y < -100) {
+                        // On le retire du tableau
+                        SoundWaves.splice(i, 1);
+                        i--;
+                    }
+                }
+                // Direction Down
+                else if (SoundWaves[i].direction == "down"){
+                    SoundWaves[i].y += SoundWaves[i].speed * t;
+                    if (SoundWaves[i].y > canvas.height + 100) {
+                        // On le retire du tableau
+                        SoundWaves.splice(i, 1);
+                        i--;
+                    }
+                }
+                // Direction Left
+                else if (SoundWaves[i].direction == "left"){
+                    SoundWaves[i].x -= SoundWaves[i].speed * t;
+                    if (SoundWaves[i].x < -100) {
+                        // On le retire du tableau
+                        SoundWaves.splice(i, 1);
+                        i--;
+                    }
+                }
+                // Direction Right
+                else if (SoundWaves[i].direction == "right"){
+                    SoundWaves[i].x += SoundWaves[i].speed * t;
+                    if (SoundWaves[i].x > canvas.width + 100) {
+                        // On le retire du tableau
+                        SoundWaves.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+
+        // ENEMIES
+            for (var i=0; i<Enemies.length; i++) {
+                for (var i=0; i<Trumps.length; i ++) {
+                    Enemies[i].x += (vectorEnemySpeed.x / modEnemySpeed) * Enemies[i].speed * t;//(vector unitaire selon x) * speed
+                    Enemies[i].y += (vectorEnemySpeed.y / modEnemySpeed) * Enemies[i].speed * t;//(vector unitaire selon y) * speed
+                    // Sort de la scene
+                    if ((Enemies[i].start != "bottom" && Enemies[i].y > canvas.height + 100) || 
+                        (Enemies[i].start != "top" && Enemies[i].y < -100) || 
+                        (Enemies[i].start != "right" && Enemies[i].x > canvas.width + 100) || 
+                        (Enemies[i].start != "left" && Enemies[i].x < -100)) {
+                        // On le retire du tableau
+                        Enemies.splice(i, 1);
+                        // On instancie un nouvel ennemi en appellant la fonction pour générer un ennemi aléatoire
+                        randomEnemy();
+                    }
+                }			
+            }
+
+        // ENEMIES & SOUNDWAVE COLLISION
+            for (var i=0; i<Enemies.length; i++) {
+                for (var j=0; j<SoundWaves.length; j++) {
+                    if ((Math.abs(Enemies[i].x - SoundWaves[j].x) < Enemies[i].image.width/4 + SoundWaves[j].image.width/4) && (Math.abs(Enemies[i].y - SoundWaves[j].y) < Enemies[i].image.height/4 + SoundWaves[j].image.height/4)) {
+                        console.log(Enemies[i].id, SoundWaves[j].id);
+                        if (Enemies[i].id == SoundWaves[j].id) {
+                            // EXPLOSION - Instanciation de la classe
+                            // SheetRows(x, y, sheet, nbRows, nbCols, width, height, scaleX, scaleY, context)
+                            var explosion = new SheetRows(Enemies[i].x, Enemies[i].y, sheetExplosions, 5, 5, 64, 64, 2, 2, context);
+                            Explosions.push(explosion);
+                            lastExplosion=Date.now();
+                            //SON EXPLOSION
+                            var sonExplosion = new Audio("audio/Explosion.mp3");
+                            sonExplosion.play();
+                            Enemies.splice(i, 1);
+                            i--;
+                            // Incrémenter le score
+                            score++;
+                            if (score%25 == 0) {
+                                level++;
+                            }
+                            updateScore();
+                            updateLevel();
+                            // On le retire l'Enemy du tableau
+                            Enemies.splice(i, 1);
+                            // On instancie un nouvel ennemi en appellant la fonction pour générer un ennemi aléatoire
+                            randomEnemy();
+                            // On retire lle SoundWave du tableau
+                            SoundWaves.splice(j, 1);
+                            j--;
+                            break;
+                        }
+                    }
+                }
+            }
+
+        // ENEMIES & TRUMP COLLISION
+            for (var i=0; i<Enemies.length; i++) {
+                for (var j=0; j<Trumps.length; j++) {
+                    if ((Math.abs(Enemies[i].x - Trumps[j].x) < Enemies[i].image.width/4 + Trumps[j].imageWidth/4) && (Math.abs(Enemies[i].y - Trumps[j].y) < Enemies[i].image.height/4 + Trumps[j].imageHeight/4)) {
+                        // On le retire du tableau
+                        Trumps.splice(i, 1);
+                        Enemies.splice(i, 1);
+                        var GroanSound= new Audio("audio/Male_Grunt.mp3");
+                        GroanSound.play();
+                        lives--;
+                        updateLives();
+                        if (lives > 0) {
+                            // On instancie un nouvel ennemi en appellant la fonction pour générer un ennemi aléatoire
+                            randomEnemy();
+                            // Instanciation de la classe
+                            // SheetRowsCols(x, y, speed, direction, rad, sheet, ticsPerImage, reverse, nbImages, imageWidth, imageHeight, xStart, yStart, scaleX, scaleY, canvas, context)
+                            Trump = new SheetRowsCols(canvas.width/2, canvas.height/2, 100, "down", Math.PI * 0.5, sheetTrump, 3, 0, 10, 256, 256, 0, 0, 0.75, 0.75, canvas, context);
+                            // Vecteur position Trump
+                            vectorPosTrump = new Vector2D(Trump.x,Trump.y);
+                            Trumps.push(Trump);
+                        }
+                        else {
+                            setTimeout(gameOver, 500);//pour voir l'explosion
+                            break;                               
+                        }
+                    }
+                }
+            }
+
+        }
+
+        // Fonction pour afficher le nombre de vies restantes
+        function updateLives() {
+            context.textAlign = 'left';
+            context.font = "bold 16pt Arial";
+            context.fillStyle="#fffddd";
+            context.textBaseline="top";
+            context.fillText("Lives : " + lives, 20, 25);
+        }
+
+        // Fonction pour afficher le niveau
+        function updateLevel() {
+            context.textAlign = 'center';
+            context.font = "bold 16pt Arial";
+            context.fillStyle="#fffddd";
+            context.textBaseline="top";
+            context.fillText("Level : " + level, canvas.width/2, 25);
+        }
+
+        // Fonction pour afficher le score
+        function updateScore() {
+            context.textAlign = 'right';
+            context.font = "bold 16pt Arial";
+            context.fillStyle="#fffddd";
+            context.textBaseline="top";
+            context.fillText("Score : " + score, canvas.width-20, 25);
+        }
+
+        function playGame() {
+            document.getElementById('start-scene').style.display = 'none';
+            isGameOver = false;
+            lives = 3;
+            score = 0;
+            level = 1;
+            Trumps=[];
+            Enemies = [];
+            SoundWaves = [];	
+            // Creer Trump - Instanciation de la classe
+            // SheetRowsCols(x, y, speed, direction, rad, sheet, ticsPerImage, reverse, nbImages, imageWidth, imageHeight, xStart, yStart, scaleX, scaleY, canvas, context)
+            Trump = new SheetRowsCols(canvas.width/2, canvas.height/2, 100, "down", Math.PI * 0.5, sheetTrump, 3, 0, 10, 256, 256, 0, 0, 0.75, 0.75, canvas, context);
+            // Vecteur position Trump
+            vectorPosTrump = new Vector2D(Trump.x,Trump.y);
+            Trumps.push(Trump);
+            // Creer des enemies
+            var randStart = random(0, 4);
+            if (randStart <= 1) {
+                // Top
+                startDir = "top";
+                enemyX = random(0, canvas.width);
+                enemyY = random(-100, 0);
+            }
+            else if (randStart > 1 && randStart <= 2) {
+                // Bottom
+                startDir = "bottom";
+                enemyX = random(0, canvas.width);
+                enemyY = random(canvas.height, canvas.height + 100);
+            }
+            else if (randStart >2 && randStart <= 3) {
+                // Left
+                startDir = "left";
+                enemyX = random(-100, 0);
+                enemyY = random(0, canvas.height);
+            }
+            else {
+                // Right
+                startDir = "right";
+                enemyX = random(canvas.width, canvas.width + 100);
+                enemyY = random(0, canvas.height);
+            }
+            // Instanciation de la classe
+            // function Enemy(x, y, start, speed, id, image, scaleX, scaleY, context)
+            var randEnemy = random(0, 3);
+            if (randEnemy <= 1) {
+                var Enemy1 = new Enemy(enemyX, enemyY, startDir, 150, 1, imageEnemy1, 0.33, 0.33, context);
+                Enemies.push(Enemy1);
+            }
+            else if (randEnemy > 2) {
+                var Enemy3 = new Enemy(enemyX, enemyY, startDir, 150, 3, imageEnemy3, 0.5, 0.5, context);
+                Enemies.push(Enemy3);
+            }
+            else {
+                var Enemy2 = new Enemy(enemyX, enemyY, startDir, 150, 2, imageEnemy2, 0.75, 0.75, context);
+                Enemies.push(Enemy2);
+            }
+            // Vecteur pos. enemy
+            var vectorEnemyPos = new Vector2D(enemyX, enemyY);
+            // Calcul du vecteur vectorenemiespeed (=direction) ou doit se diriger l'ennemi
+            var vectorEnemySpeed = new Vector2D();
+            vectorEnemySpeed = vectorPosTrump.subtract(vectorEnemyPos);
+            // Module ou longueur du vecteur (=nombre)
+            var modEnemySpeed = vectorEnemySpeed.length();
+            window.onload = requestAnimationFrame(animate);
+        };
+
+        // Game over
+        function gameOver()  {
+            document.getElementById('gameOver-scene').style.display = 'block';
+            // Retirer tous les enemies
+            for (var i=0; i<Enemies.length; i++) {
+                Enemies.splice(i,1);
+            }
+            Enemies = [];
+            isGameOver = true;
+            window.cancelAnimationFrame(animation);
+
+        }
+
+        function playAgain() {
+            document.getElementById('gameOver-scene').style.display = 'none';
+            isGameOver = false;
+            lives = 3;
+            score = 0;
+            level = 1;
+            Trumps=[];
+            Enemies = [];
+            SoundWaves = [];	
+            // Creer Trump - Instanciation de la classe
+            // SheetRowsCols(x, y, speed, direction, rad, sheet, ticsPerImage, reverse, nbImages, imageWidth, imageHeight, xStart, yStart, scaleX, scaleY, canvas, context)
+            Trump = new SheetRowsCols(canvas.width/2, canvas.height/2, 100, "down", Math.PI * 0.5, sheetTrump, 3, 0, 10, 256, 256, 0, 0, 0.75, 0.75, canvas, context);
+            // Vecteur position Trump
+            vectorPosTrump = new Vector2D(Trump.x,Trump.y);
+            Trumps.push(Trump);
+            // Creer des enemies
+            var randStart = random(0, 4);
+            if (randStart <= 1) {
+                // Top
+                startDir = "top";
+                enemyX = random(0, canvas.width);
+                enemyY = random(-100, 0);
+            }
+            else if (randStart > 1 && randStart <= 2) {
+                // Bottom
+                startDir = "bottom";
+                enemyX = random(0, canvas.width);
+                enemyY = random(canvas.height, canvas.height + 100);
+            }
+            else if (randStart >2 && randStart <= 3) {
+                // Left
+                startDir = "left";
+                enemyX = random(-100, 0);
+                enemyY = random(0, canvas.height);
+            }
+            else {
+                // Right
+                startDir = "right";
+                enemyX = random(canvas.width, canvas.width + 100);
+                enemyY = random(0, canvas.height);
+            }
+            // Instanciation de la classe
+            // function Enemy(x, y, start, speed, id, image, scaleX, scaleY, context)
+            var randEnemy = random(0, 3);
+            if (randEnemy <= 1) {
+                var Enemy1 = new Enemy(enemyX, enemyY, startDir, 150, 1, imageEnemy1, 0.33, 0.33, context);
+                Enemies.push(Enemy1);
+            }
+            else if (randEnemy > 2) {
+                var Enemy3 = new Enemy(enemyX, enemyY, startDir, 150, 3, imageEnemy3, 0.5, 0.5, context);
+                Enemies.push(Enemy3);
+            }
+            else {
+                var Enemy2 = new Enemy(enemyX, enemyY, startDir, 150, 2, imageEnemy2, 0.75, 0.75, context);
+                Enemies.push(Enemy2);
+            }
+            // Vecteur pos. enemy
+            var vectorEnemyPos = new Vector2D(enemyX, enemyY);
+            // Calcul du vecteur vectorenemiespeed (=direction) ou doit se diriger l'ennemi
+            var vectorEnemySpeed = new Vector2D();
+            vectorEnemySpeed = vectorPosTrump.subtract(vectorEnemyPos);
+            // Module ou longueur du vecteur (=nombre)
+            var modEnemySpeed = vectorEnemySpeed.length();
+            /*for (var i=0;i<5;i++) {
+                //enemy(x,y,v,image,alphaRad,echelleX,echelleY,context)
+                var enemy=new enemy(Math.random()*canvas.width,-100,
+                Math.random()*100+50,imageAster,Math.PI/100,Math.random()+.2,Math.random()+.2,context);
+                enemies.push(enemy);
+            }
+            for(var i=0;i<1;i++) {
+                //creer en bas un Trump avec classe Trump(x,y,v,echelle,image,context)
+                var Trump=new Trump(275, 700,200,1,imageTrump,context);
+                Trumps.push(Trump);
+            }
+            */
+            window.onload = requestAnimationFrame(animate);
+        };
+
+        </script>
+    </body>
+</html>
